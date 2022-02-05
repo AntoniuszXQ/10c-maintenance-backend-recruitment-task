@@ -7,6 +7,7 @@ from core.businesslogic.errors import CannotInvestIntoProjectException
 from core.businesslogic.investing import invest_into_project
 from core.models import Project, Investor
 from core.serializers import ProjectSerializer, ProjectDetailsSerializer, InvestorSerializer, InvestorDetailsSerializer
+from core.businesslogic.matches import project_matches , investor_matches
 
 
 class ProjectsView(generics.ListCreateAPIView):
@@ -82,3 +83,29 @@ class InvestIntoProject(APIView):
                 "remaining_amount": investor.remaining_amount
             }
         )
+
+    
+    
+    class MatchingProjectsForInvestor(generics.ListAPIView):
+    queryset = Investor.objects.all()
+    serializer_class = InvestorSerializer
+
+    def get(self,request,pk):
+
+        project = get_object_or_404(Project,pk=pk)
+        investors = investor_matches(self.queryset,project)
+        serializer = self.get_serializer(investors,many=True)
+
+        return Response(serializer.data)
+
+class MatchingInvestorForProject(generics.ListAPIView):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+
+    def get(self,request,pk):
+
+        investor = get_object_or_404(Investor,pk=pk)
+        projects = project_matches(self.queryset,investor)
+        serializer = self.get_serializer(projects,many=True)
+
+        return Response(serializer.data)
